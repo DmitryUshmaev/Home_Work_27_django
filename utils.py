@@ -15,35 +15,36 @@ def csv_to_json(csvFilePath, jsonFilePath):
         json_file.write(jsonString)
 
 
-csvFilePath = 'datasets/categories.csv'
+csvFilePath = 'datasets/user.csv'
 
-jsonFilePath = 'datasets/ads.json'
+jsonFilePath = 'datasets/user.json'
 
 
 # Изменение формата json файла для загрузки в базу данных на основе моделей
 
-def reformat_json(jsonFilePath):
-    with open(jsonFilePath, encoding='utf-8') as json_file:
-        json_f = json.load(json_file)
-        new_json = []
 
-        for row in json_f:
-            new_json.append({
-                "model": "ads.ADS",
-                "pk": row["Id"],
-                "fields": {
-                    "name": row["name"],
-                    "author": row["author"],
-                    "price": row["price"],
-                    "description": row["description"],
-                    "address": row["address"],
-                    "is_published": row["is_published"]
-                }
-            })
+def convert_json(csv_file, json_file, model):
+    result = []
+    with open(csv_file, encoding='utf-8') as csv_f:
+        for row in csv.DictReader(csv_f):
+            to_add = {
+                "model": model,
+                "pk": int(row['Id'] if 'Id' in row else row['id'])
+            }
+            if 'id' in row:
+                del row['id']
+            else:
+                del row['Id']
 
-    with open(jsonFilePath, 'w', encoding='utf-8') as json_file:
-        json_reformat = json.dumps(new_json, ensure_ascii=False, indent=4)
-        json_file.write(json_reformat)
+            if 'location_id' in row:
+                row['location'] = [int(row['location_id'])]
+                del row['location_id']
+
+            to_add["fields"] = row
+            result.append(to_add)
+
+    with open(json_file, 'w', encoding='utf-8') as json_f:
+        json_f.write(json.dumps(result, indent=4, ensure_ascii=False))
 
 
-reformat_json(jsonFilePath)
+convert_json(csvFilePath, jsonFilePath, 'users.User')
