@@ -5,10 +5,13 @@ from django.shortcuts import render, get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import ListView, DetailView, UpdateView, CreateView, DeleteView
+from rest_framework.generics import CreateAPIView, ListAPIView
+from rest_framework.viewsets import ModelViewSet
 
 from Home_Work_27_django.settings import TOTAL_ON_PAGE
 from ads.models import Category
 from users.models import User, Location
+from users.serializers import UserCreateSerializer, LocationSerializer
 
 
 class UserListView(ListView):
@@ -97,38 +100,18 @@ class UserUpdateView(UpdateView):
         })
 
 
-@method_decorator(csrf_exempt, name='dispatch')
-class UserCreateView(CreateView):
-    model = User
-    fields = ['name']
+class UserCreateView(CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserCreateSerializer
 
     def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)
-        user = User.objects.create(
-            username=data['username'],
-            first_name=data['first_name'],
-            last_name=data['last_name'],
-            age=data['age'],
-            role=data['role'],
-        )
+        data = UserCreateSerializer(data=json.loads(request.body))
+        if data.is_valid():
+            data.save()
+        else:
+            return JsonResponse(data.errors)
 
-        if 'locations' in data:
-            for loc_name in data['locations']:
-                loc, _ = Location.objects.get_or_create(name=loc_name)
-                user.location.add(loc)
-
-        self.object.save()
-
-        return JsonResponse({
-            "id": user.pk,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "username": user.username,
-            "role": user.role,
-            "age": user.age,
-            "locations": list(map(str, user.location.all())),
-
-        })
+        return JsonResponse(data.data)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -139,3 +122,8 @@ class UserDeleteView(DeleteView):
     def delete(self, request, *args, **kwargs):
         super().delete(request, *args, **kwargs)
         return JsonResponse({'status': 'ok'}, status=200)
+
+
+class LocationViewSet(ModelViewSet):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
