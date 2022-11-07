@@ -19,18 +19,23 @@ from django.urls import path, include
 from rest_framework import routers
 from Home_Work_27_django import settings
 from ads.views.ad import ad, AdViewSet
+from ads.views.category import CategoryViewSet
 from users.views import LocationViewSet
+from users.views import UserViewSet
 
 
 router = routers.SimpleRouter()
 router.register('location', LocationViewSet)
 router.register('ad', AdViewSet)
+router.register('user', UserViewSet)
+router.register('cat', CategoryViewSet)
+router.register('selection', SelectionViewSet)
 
 urlpatterns = [
     path('', ad),
     path('admin/', admin.site.urls),
     # path('ad/', include('ads.urls.ad')),
-    path('cat/', include('ads.urls.category')),
+    # path('cat/', include('ads.urls.category')),
     path('user/', include('users.urls')),
 ]
 

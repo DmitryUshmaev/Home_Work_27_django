@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, CreateView, ListView, UpdateView, DeleteView
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from rest_framework.viewsets import ModelViewSet
 from urllib3 import request
@@ -26,6 +27,14 @@ def ad(request):
 class AdViewSet(ModelViewSet):
     queryset = ADS.objects.order_by('-price')
     serializer_class = AdSerializer
+
+    default_permissions = [AllowAny()]
+    permissions = {
+        'retrieve': [IsAuthenticated]
+    }
+
+    def get_permissions(self):
+        return self.permissions.get(self.action, self.default_permissions)
 
     def list(self, request, *args, **kwargs):
         categories = request.GET.getlist('cat', [])
@@ -50,8 +59,6 @@ class AdViewSet(ModelViewSet):
             self.queryset = self.queryset.filter(price__lte=price_to)
         if price_from:
             self.queryset = self.queryset.filter(price__gte=price_to)
-
-
 
         return super().list(self, request, *args, **kwargs)
 
